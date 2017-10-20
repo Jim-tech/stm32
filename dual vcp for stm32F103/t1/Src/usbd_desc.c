@@ -71,11 +71,11 @@
 /** @defgroup USBD_DESC_Private_Defines
   * @{
   */ 
-#define USBD_VID     0xFF02
+#define USBD_VID     1155
 #define USBD_LANGID_STRING     1033
-#define USBD_MANUFACTURER_STRING     "Baicells"
-#define USBD_PID_FS     0x0001
-#define USBD_PRODUCT_STRING_FS     "Baicells ATE ComPort"
+#define USBD_MANUFACTURER_STRING     "STMicroelectronics"
+#define USBD_PID_FS     22336
+#define USBD_PRODUCT_STRING_FS     "STM32 Virtual ComPort"
 #define USBD_SERIALNUMBER_STRING_FS     "00000000001A"
 #define USBD_CONFIGURATION_STRING_FS     "CDC Config"
 #define USBD_INTERFACE_STRING_FS     "CDC Interface"
@@ -130,10 +130,10 @@ __ALIGN_BEGIN uint8_t USBD_FS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
     USB_DESC_TYPE_DEVICE,       /*bDescriptorType*/
     0x00,                       /* bcdUSB */  
     0x02,
-    0xef,                        /*bDeviceClass*/
+    0xEF,                        /*bDeviceClass*/
     0x02,                       /*bDeviceSubClass*/
     0x01,                       /*bDeviceProtocol*/
-    64,                          /*bMaxPacketSize*/
+    USB_MAX_EP0_SIZE,          /*bMaxPacketSize*/
     LOBYTE(USBD_VID),           /*idVendor*/
     HIBYTE(USBD_VID),           /*idVendor*/
     LOBYTE(USBD_PID_FS),           /*idVendor*/

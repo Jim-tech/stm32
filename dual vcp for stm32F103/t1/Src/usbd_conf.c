@@ -282,11 +282,16 @@ USBD_StatusTypeDef  USBD_LL_Init (USBD_HandleTypeDef *pdev)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x00 , PCD_SNG_BUF, 0x18);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x80 , PCD_SNG_BUF, 0x58);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x81 , PCD_SNG_BUF, 0xC0);  
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x01 , PCD_SNG_BUF, 0x110);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x82 , PCD_SNG_BUF, 0x100);  
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x00 , PCD_SNG_BUF, 0x40);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x80 , PCD_SNG_BUF, 0x80);
+  
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , VCP1_CMD_EP , PCD_SNG_BUF, 0xC0);  
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , VCP1_IN_EP , PCD_SNG_BUF, 0xD0);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , VCP1_OUT_EP , PCD_SNG_BUF, 0x110);  
+
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , VCP2_CMD_EP , PCD_SNG_BUF, 0x150);  
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , VCP2_IN_EP , PCD_SNG_BUF, 0x160);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , VCP2_OUT_EP , PCD_SNG_BUF, 0x1A0);  
   return USBD_OK;
 }
 

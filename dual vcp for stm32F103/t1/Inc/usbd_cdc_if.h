@@ -112,7 +112,7 @@ extern USBD_CDC_ItfTypeDef  USBD_Interface_fops_FS;
 /** @defgroup USBD_CDC_IF_Exported_FunctionsPrototype
   * @{
   */ 
-uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
+uint8_t CDC_Transmit_FS(uint8_t vcpidx, uint8_t* Buf, uint16_t Len);
 
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
 /* USER CODE END EXPORTED_FUNCTIONS */
@@ -127,7 +127,20 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 /**
   * @}
   */ 
-  
+
+#define VCP_NUM           2
+
+typedef struct
+{
+	uint32_t bitrate;
+	uint8_t  format;
+	uint8_t  paritytype;
+	uint8_t  datatype;
+} LINE_CODING;
+
+extern uint8_t  RxBuffer[CDC_DATA_FS_OUT_PACKET_SIZE];
+extern uint8_t  TxBuffer[CDC_DATA_FS_OUT_PACKET_SIZE];
+
 #ifdef __cplusplus
 }
 #endif

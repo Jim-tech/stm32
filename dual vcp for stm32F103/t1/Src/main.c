@@ -49,6 +49,7 @@
 #include "main.h"
 #include "stm32f1xx_hal.h"
 #include "usb_device.h"
+#include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -57,6 +58,10 @@
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart1_rx;
+DMA_HandleTypeDef hdma_usart1_tx;
+DMA_HandleTypeDef hdma_usart2_rx;
+DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -66,6 +71,7 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 
@@ -103,42 +109,24 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN 2 */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  
-  /* Configure the GPIO_LED pin */
-  GPIO_InitTypeDef  gpioinitstruct = {0};
-  gpioinitstruct.Pin    = GPIO_PIN_13;
-  gpioinitstruct.Mode   = GPIO_MODE_OUTPUT_PP;
-  gpioinitstruct.Pull   = GPIO_NOPULL;
-  gpioinitstruct.Speed  = GPIO_SPEED_FREQ_HIGH;
-
-  HAL_GPIO_Init(GPIOC, &gpioinitstruct);
-
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  //printf("fs cfg desc size=%d \r\n", sizeof(USBD_CDC_CfgFSDesc));
-  
-  int i = 0;
   while (1)
   {
   /* USER CODE END WHILE */
-
+    HAL_Delay(1000);  
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
   /* USER CODE BEGIN 3 */
-    HAL_Delay(500);  
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-    HAL_Delay(500);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
-		
-		printf("Hello world! cnt = %d \r\n", i++);
+
   }
   /* USER CODE END 3 */
 
@@ -238,6 +226,30 @@ static void MX_USART2_UART_Init(void)
 
 }
 
+/** 
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void) 
+{
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+  /* DMA1_Channel6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+  /* DMA1_Channel7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+
+}
+
 /** Configure pins as 
         * Analog 
         * Input 
@@ -247,15 +259,51 @@ static void MX_USART2_UART_Init(void)
 */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef  gpioinitstruct = {0};
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
+  /* Configure the GPIO_LED pin */
+  gpioinitstruct.Pin    = GPIO_PIN_13;
+  gpioinitstruct.Mode   = GPIO_MODE_OUTPUT_PP;
+  gpioinitstruct.Pull   = GPIO_NOPULL;
+  gpioinitstruct.Speed  = GPIO_SPEED_FREQ_HIGH;
+
+  HAL_GPIO_Init(GPIOC, &gpioinitstruct);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 }
 
 /* USER CODE BEGIN 4 */
+/**
+  * @brief  Rx Transfer completed callback
+  * @param  UartHandle: UART handle
+  * @note   This example shows a simple way to report end of DMA Rx transfer, and 
+  *         you can add your own implementation.
+  * @retval None
+  */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
+{
+    uint8_t  vcpidx = 0;
 
+    if (UartHandle->Instance == USART1)
+        vcpidx = 0;
+    else if (UartHandle->Instance == USART2)
+        vcpidx = 1;
+    else
+        return;
+
+    CDC_Transmit_FS(vcpidx, TxBuffer, 1);
+
+    if(HAL_UART_Receive_DMA(UartHandle, TxBuffer, 1) != HAL_OK)
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }
+    
+    (void)vcpidx;
+}
 /* USER CODE END 4 */
 
 /**
@@ -271,20 +319,6 @@ void _Error_Handler(char * file, int line)
   {
   }
   /* USER CODE END Error_Handler_Debug */ 
-}
-
-/**
-  * @brief  Retargets the C library printf function to the USART.
-  * @param  None
-  * @retval None
-  */
-int fputc(int ch, FILE *f)
-{
-  /* Place your implementation of fputc here */
-  /* e.g. write a character to the USART1 and Loop until the end of transmission */
-  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
-
-  return ch;
 }
 
 #ifdef USE_FULL_ASSERT
