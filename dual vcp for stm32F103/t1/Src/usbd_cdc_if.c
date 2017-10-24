@@ -102,7 +102,7 @@ LINE_CODING LineCoding[VCP_NUM];
 
 /* USER CODE END PRIVATE_VARIABLES */
 uint8_t  RxBuffer[CDC_DATA_FS_OUT_PACKET_SIZE];
-uint8_t  TxBuffer[CDC_DATA_FS_OUT_PACKET_SIZE];
+USART_Q  TxQueue[VCP_NUM];
 
 /**
   * @}
@@ -218,11 +218,13 @@ static void MX_USART_UART_CfgSet(uint8_t index, LINE_CODING *plinecode)
     Error_Handler();
   }
 
-  if(HAL_UART_Receive_DMA(phuart[index], TxBuffer, 1) != HAL_OK)
+  if(HAL_UART_Receive_DMA(phuart[index], TxQueue[index].Buffer, 1) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }     
 
+  TxQueue[index].InPos = 0;
+  TxQueue[index].OutPos = 0;
 }
 /* Private functions ---------------------------------------------------------*/
 /**
@@ -245,15 +247,17 @@ static int8_t CDC_Init_FS(void)
      LineCoding[index].paritytype = 0;
      LineCoding[index].datatype = 8;
 
-     USBD_LL_PrepareReceive(&hUsbDeviceFS, epaddr[index], &(RxBuffer[0]), CDC_DATA_FS_OUT_PACKET_SIZE);
+     USBD_LL_PrepareReceive(&hUsbDeviceFS, epaddr[index], RxBuffer, CDC_DATA_FS_OUT_PACKET_SIZE);
 
-      if(HAL_UART_Receive_DMA(phuart[index], TxBuffer, 1) != HAL_OK)
-      {
-        _Error_Handler(__FILE__, __LINE__);
-      }     
-     
+     TxQueue[index].InPos = 0;
+     TxQueue[index].OutPos = 0;
+
+     if(HAL_UART_Receive_DMA(phuart[index], TxQueue[index].Buffer, 1) != HAL_OK)
+     {
+       _Error_Handler(__FILE__, __LINE__);
+     }     
   }
-  
+
   return (USBD_OK);
   /* USER CODE END 3 */ 
 }
@@ -402,8 +406,8 @@ static int8_t CDC_Receive_FS (uint8_t epnum, uint32_t Len)
 
       USBD_LL_PrepareReceive(&hUsbDeviceFS,
                              epnum,
-                             &RxBuffer[0],
-                             Len);
+                             RxBuffer,
+                             CDC_DATA_FS_OUT_PACKET_SIZE);
 
     HAL_UART_Transmit_DMA(phuart[vcpidx], RxBuffer, Len);
   

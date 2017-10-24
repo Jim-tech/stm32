@@ -53,12 +53,12 @@
 #define VCP1_OUT_EP                                  0x01  /* EP1 for data OUT */
 #define VCP1_CMD_EP                                  0x82  /* EP2 for CDC commands */
 
-#define VCP2_IN_EP                                   0x85  /* EP1 for data IN */
-#define VCP2_OUT_EP                                  0x05  /* EP1 for data OUT */
+#define VCP2_IN_EP                                   0x83  /* EP1 for data IN */
+#define VCP2_OUT_EP                                  0x03  /* EP1 for data OUT */
 #define VCP2_CMD_EP                                  0x84  /* EP2 for CDC commands */
 
 /* CDC Endpoints parameters: you can fine tune these values depending on the needed baudrates and performance. */
-#define CDC_DATA_HS_MAX_PACKET_SIZE                 512  /* Endpoint IN & OUT Packet size */
+#define CDC_DATA_HS_MAX_PACKET_SIZE                 64//512  /* Endpoint IN & OUT Packet size */
 #define CDC_DATA_FS_MAX_PACKET_SIZE                 64  /* Endpoint IN & OUT Packet size */
 #define CDC_CMD_PACKET_SIZE                         8  /* Control Endpoint Packet size */ 
 
@@ -117,10 +117,12 @@ typedef struct
   uint32_t data[CDC_DATA_HS_MAX_PACKET_SIZE/4];      /* Force 32bits alignment */
   uint8_t  CmdOpCode;
   uint8_t  CmdLength;    
-  //uint8_t  *RxBuffer;  
-  //uint8_t  *TxBuffer;   
-  //uint32_t RxLength;
-  //uint32_t TxLength;    
+  #if  0
+  uint8_t  *RxBuffer;  
+  uint8_t  *TxBuffer;   
+  uint32_t RxLength;
+  uint32_t TxLength;    
+  #endif /* #if 0 */
   
   __IO uint32_t TxState;     
   __IO uint32_t RxState;    

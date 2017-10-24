@@ -56,6 +56,8 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim1;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart1_rx;
@@ -74,6 +76,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM1_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -113,18 +116,21 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_USB_DEVICE_Init();
+  MX_TIM1_Init();
 
   /* USER CODE BEGIN 2 */
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
   /* USER CODE END WHILE */
-    HAL_Delay(1000);  
+    HAL_Delay(500);  
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+
+
   /* USER CODE BEGIN 3 */
 
   }
@@ -186,6 +192,44 @@ void SystemClock_Config(void)
 
   /* SysTick_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+}
+
+/* TIM1 init function */
+static void MX_TIM1_Init(void)
+{
+
+  TIM_ClockConfigTypeDef sClockSourceConfig;
+  TIM_MasterConfigTypeDef sMasterConfig;
+
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 7199;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 10;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  if(HAL_TIM_Base_Start_IT(&htim1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
 }
 
 /* USART1 init function */
@@ -277,6 +321,60 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+  * @brief  TIM period elapsed callback
+  * @param  htim: TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    uint8_t  vcpidx;
+    uint32_t len;
+    uint32_t InPos;
+    uint32_t OutPos;
+
+    if (htim->Instance != htim1.Instance)
+    {
+        return;
+    }
+    
+    for (vcpidx = 0; vcpidx < VCP_NUM; vcpidx++)
+    {
+        InPos = TxQueue[vcpidx].InPos;
+        OutPos = TxQueue[vcpidx].OutPos;
+        
+        if (InPos == OutPos)
+        {
+            continue;
+        }
+        else if (InPos < OutPos)
+        {
+            len = USART_RX_QUEUE_LEN - OutPos;
+        }
+        else
+        {
+            len = InPos - OutPos;
+        }
+
+        if (len > CDC_DATA_FS_IN_PACKET_SIZE)
+        {
+            len = CDC_DATA_FS_IN_PACKET_SIZE;
+        }
+
+        CDC_Transmit_FS(vcpidx, &(TxQueue[vcpidx].Buffer[OutPos]), len);
+        
+        OutPos += len;
+        if (OutPos >= USART_RX_QUEUE_LEN)
+        {
+            OutPos = 0;
+        }
+
+        TxQueue[vcpidx].OutPos = OutPos;
+    }    
+}
+
+
 /**
   * @brief  Rx Transfer completed callback
   * @param  UartHandle: UART handle
@@ -295,15 +393,62 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
     else
         return;
 
-    CDC_Transmit_FS(vcpidx, TxBuffer, 1);
+    TxQueue[vcpidx].InPos++;
+    if (TxQueue[vcpidx].InPos >= USART_RX_QUEUE_LEN)
+    {
+        TxQueue[vcpidx].InPos = 0;
+    }
 
-    if(HAL_UART_Receive_DMA(UartHandle, TxBuffer, 1) != HAL_OK)
+    if (TxQueue[vcpidx].InPos == TxQueue[vcpidx].OutPos)
+    {
+        TxQueue[vcpidx].OutPos++;
+        if (TxQueue[vcpidx].OutPos >= USART_RX_QUEUE_LEN)
+        {
+            TxQueue[vcpidx].OutPos = 0;
+        }
+    }
+
+    //CDC_Transmit_FS(vcpidx, &(TxQueue[vcpidx].Buffer[TxQueue[vcpidx].InPos]), 1);
+    //CDC_Transmit_FS(vcpidx, (uint8_t *)&(UartHandle->RxXferSize), sizeof(uint16_t));
+    
+    if(HAL_UART_Receive_DMA(UartHandle, &(TxQueue[vcpidx].Buffer[TxQueue[vcpidx].InPos]), 1) != HAL_OK)
     {
       _Error_Handler(__FILE__, __LINE__);
     }
-    
-    (void)vcpidx;
 }
+
+/**
+  * @brief  Rx Transfer completed callback
+  * @param  UartHandle: UART handle
+  * @note   This example shows a simple way to report end of DMA Rx transfer, and 
+  *         you can add your own implementation.
+  * @retval None
+  */
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *UartHandle)
+{
+    uint8_t  vcpidx = 0;
+
+    if (UartHandle->Instance == USART1)
+        vcpidx = 0;
+    else if (UartHandle->Instance == USART2)
+        vcpidx = 1;
+    else
+        return;
+    
+    if (HAL_UART_Init(UartHandle) != HAL_OK)
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }
+
+    TxQueue[vcpidx].InPos = 0;
+    TxQueue[vcpidx].OutPos = 0;
+
+    if(HAL_UART_Receive_DMA(UartHandle, TxQueue[vcpidx].Buffer, 1) != HAL_OK)
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }         
+}
+
 /* USER CODE END 4 */
 
 /**
@@ -315,10 +460,21 @@ void _Error_Handler(char * file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
   while(1) 
   {
   }
   /* USER CODE END Error_Handler_Debug */ 
+}
+
+int fputc(int ch, FILE *f)
+{
+  /* Place your implementation of fputc here */
+  /* e.g. write a character to the USART1 and Loop until the end of transmission */
+  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
+  //HAL_UART_Transmit_DMA(&huart1, (uint8_t *)&ch, 1);
+
+  return ch;
 }
 
 #ifdef USE_FULL_ASSERT

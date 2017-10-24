@@ -1146,6 +1146,7 @@ uint8_t  USBD_CDC_RegisterInterface  (USBD_HandleTypeDef   *pdev,
 }
 
 #if  0
+
 /**
   * @brief  USBD_CDC_SetTxBuffer
   * @param  pdev: device instance

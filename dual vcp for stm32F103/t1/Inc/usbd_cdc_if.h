@@ -139,7 +139,17 @@ typedef struct
 } LINE_CODING;
 
 extern uint8_t  RxBuffer[CDC_DATA_FS_OUT_PACKET_SIZE];
-extern uint8_t  TxBuffer[CDC_DATA_FS_OUT_PACKET_SIZE];
+
+#define USART_RX_QUEUE_LEN 1024
+
+typedef struct
+{
+	uint8_t  Buffer[USART_RX_QUEUE_LEN];
+	uint32_t InPos;
+	uint32_t OutPos;
+} USART_Q;
+
+extern USART_Q  TxQueue[VCP_NUM];
 
 #ifdef __cplusplus
 }
