@@ -237,7 +237,6 @@ static int8_t CDC_Init_FS(void)
 { 
   uint8_t index;
   uint8_t epaddr[] = {VCP1_OUT_EP, VCP2_OUT_EP};
-  UART_HandleTypeDef *phuart[VCP_NUM] = {&huart1, &huart2};
   
   /* USER CODE BEGIN 3 */ 
   for (index = 0; index < VCP_NUM; index++)
@@ -251,11 +250,6 @@ static int8_t CDC_Init_FS(void)
 
      TxQueue[index].InPos = 0;
      TxQueue[index].OutPos = 0;
-
-     if(HAL_UART_Receive_DMA(phuart[index], TxQueue[index].Buffer, 1) != HAL_OK)
-     {
-       _Error_Handler(__FILE__, __LINE__);
-     }     
   }
 
   return (USBD_OK);
