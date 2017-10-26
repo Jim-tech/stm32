@@ -57,12 +57,15 @@
 #define VCP2_OUT_EP                                  0x03  /* EP1 for data OUT */
 #define VCP2_CMD_EP                                  0x84  /* EP2 for CDC commands */
 
+#define IO_IN_EP                                     0x85  /* EP2 for CDC commands */
+#define IO_OUT_EP                                    0x05  /* EP2 for CDC commands */
+
 /* CDC Endpoints parameters: you can fine tune these values depending on the needed baudrates and performance. */
 #define CDC_DATA_HS_MAX_PACKET_SIZE                 64//512  /* Endpoint IN & OUT Packet size */
 #define CDC_DATA_FS_MAX_PACKET_SIZE                 64  /* Endpoint IN & OUT Packet size */
 #define CDC_CMD_PACKET_SIZE                         8  /* Control Endpoint Packet size */ 
 
-#define USB_CDC_CONFIG_DESC_SIZ                     141
+#define USB_CDC_CONFIG_DESC_SIZ                     172//141
 #define CDC_DATA_HS_IN_PACKET_SIZE                  CDC_DATA_HS_MAX_PACKET_SIZE
 #define CDC_DATA_HS_OUT_PACKET_SIZE                 CDC_DATA_HS_MAX_PACKET_SIZE
 

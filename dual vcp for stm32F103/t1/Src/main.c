@@ -123,7 +123,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+  printf("[%s][%d]startup\r\n", __func__, __LINE__);
+  
   while (1)
   {
   /* USER CODE END WHILE */
@@ -461,6 +462,7 @@ void _Error_Handler(char * file, int line)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+  printf("[%s][%d] error\r\n", file, line);
   while(1) 
   {
   }
@@ -471,7 +473,7 @@ int fputc(int ch, FILE *f)
 {
   /* Place your implementation of fputc here */
   /* e.g. write a character to the USART1 and Loop until the end of transmission */
-  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
+  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
   //HAL_UART_Transmit_DMA(&huart1, (uint8_t *)&ch, 1);
 
   return ch;

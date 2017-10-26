@@ -292,6 +292,10 @@ USBD_StatusTypeDef  USBD_LL_Init (USBD_HandleTypeDef *pdev)
   HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , VCP2_CMD_EP , PCD_SNG_BUF, 0x150);  
   HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , VCP2_IN_EP , PCD_SNG_BUF, 0x160);
   HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , VCP2_OUT_EP , PCD_SNG_BUF, 0x1A0);  
+
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , IO_IN_EP , PCD_SNG_BUF, 0x1E0);  
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , IO_OUT_EP , PCD_SNG_BUF, 0x1F0);  
+  
   return USBD_OK;
 }
 

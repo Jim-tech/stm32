@@ -75,7 +75,7 @@
 #define USBD_LANGID_STRING     1033
 #define USBD_MANUFACTURER_STRING     "Baicells"
 #define USBD_PID_FS     0x9361
-#define USBD_PRODUCT_STRING_FS     "Baicells ATE ComPort"
+#define USBD_PRODUCT_STRING_FS     "Baicells ATE Card"
 #define USBD_SERIALNUMBER_STRING_FS     "00000000001A"
 #define USBD_CONFIGURATION_STRING_FS     "Dual Vcp Config"
 #define USBD_INTERFACE_STRING_FS     "Dual Vcp Interface"

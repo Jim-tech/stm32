@@ -138,7 +138,8 @@ typedef struct
 	uint8_t  datatype;
 } LINE_CODING;
 
-extern uint8_t  RxBuffer[CDC_DATA_FS_OUT_PACKET_SIZE];
+extern uint8_t  RxBuffer[VCP_NUM][CDC_DATA_FS_OUT_PACKET_SIZE];
+extern uint8_t  IoBuffer[CDC_CMD_PACKET_SIZE];
 
 #define USART_RX_QUEUE_LEN 1024
 
