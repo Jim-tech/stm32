@@ -370,6 +370,104 @@ static int8_t CDC_Control_FS  (uint16_t windex, uint8_t cmd, uint8_t* pbuf, uint
   /* USER CODE END 5 */
 }
 
+static int8_t CDC_IoResponse (uint8_t *resp, uint32_t Len)
+{
+    return CDC_Transmit_FS(2, resp, Len);
+}
+
+static void CDC_IoReq_Process (uint8_t *req, uint32_t Len)
+{
+    uint8_t  cmd = req[0];
+    GPIO_TypeDef* gpioports[] = {GPIOA, GPIOB, GPIOC, GPIOD};
+
+    switch (cmd)
+    {
+        case IO_RESET_CMD:
+            __set_FAULTMASK(1);
+            HAL_NVIC_SystemReset();
+            break;
+            
+        case IO_GPIO_GET:
+            {
+                GPIO_CMD_S *preq = (GPIO_CMD_S *)req;
+                GPIO_CMD_S  stresp = {0};
+                
+                if (preq->id >= 64)
+                {
+                    stresp.error = 0xFF;
+                }
+                else
+                {
+                    stresp.level = HAL_GPIO_ReadPin(gpioports[preq->id/16], preq->id%16);
+                    stresp.error = 0;
+                }
+
+                CDC_IoResponse((uint8_t *)&stresp, sizeof(stresp));
+            }
+            break;
+        case IO_GPIO_SET:
+            {
+                GPIO_CMD_S *preq = (GPIO_CMD_S *)req;
+                GPIO_CMD_S  stresp = {0};
+                
+                if (preq->id >= 64)
+                {
+                    stresp.error = 0xFF;
+                }
+                else
+                {
+                    HAL_GPIO_WritePin(gpioports[preq->id/16], preq->id%16, (GPIO_PinState)(preq->level));
+                    stresp.error = 0;
+                }
+
+                CDC_IoResponse((uint8_t *)&stresp, sizeof(stresp));
+            }            
+            break;
+        case IO_GPIO_INIT:
+            {
+                GPIO_CMD_S *preq = (GPIO_CMD_S *)req;
+                GPIO_CMD_S  stresp = {0};
+                
+                if (preq->id >= 64)
+                {
+                    stresp.error = 0xFF;
+                }
+                else
+                {
+                    GPIO_InitTypeDef  gpioinitstruct = {0};
+
+                    gpioinitstruct.Pin    = preq->id%16;
+
+                    if (preq->dir)
+                    {
+                        gpioinitstruct.Mode   = GPIO_MODE_OUTPUT_PP;
+                    }
+                    else
+                    {
+                        gpioinitstruct.Mode   = GPIO_MODE_INPUT;
+                    }
+                    
+                    gpioinitstruct.Pull   = GPIO_NOPULL;
+                    gpioinitstruct.Speed  = GPIO_SPEED_FREQ_HIGH;
+
+                    HAL_GPIO_Init(gpioports[preq->id/16], &gpioinitstruct);
+                    HAL_GPIO_WritePin(gpioports[preq->id/16], preq->id%16, (GPIO_PinState)(preq->level));
+                    
+                    stresp.error = 0;
+                }
+
+                CDC_IoResponse((uint8_t *)&stresp, sizeof(stresp));
+            }            
+            break;
+        case IO_ADC_CMD:
+            break;            
+        default:
+            break;
+    }
+
+    return;
+}
+
 /**
   * @brief  CDC_Receive_FS
   *         Data received over USB OUT endpoint are sent over CDC interface 
@@ -435,7 +533,7 @@ static int8_t CDC_Receive_FS (uint8_t epnum, uint32_t Len)
                               IoBuffer,
                               sizeof(IoBuffer));
 
-      CDC_Transmit_FS(2, IoBuffer, Len);
+      CDC_IoReq_Process(IoBuffer, Len);
   }
   
   return (USBD_OK);

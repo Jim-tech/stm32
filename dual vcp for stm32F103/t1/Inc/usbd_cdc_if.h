@@ -128,6 +128,31 @@ uint8_t CDC_Transmit_FS(uint8_t vcpidx, uint8_t* Buf, uint16_t Len);
   * @}
   */ 
 
+typedef enum 
+{
+  IO_RESET_CMD    = 0x01,
+  IO_GPIO_GET     = 0x02,
+  IO_GPIO_SET     = 0x03,
+  IO_GPIO_INIT    = 0x04,  
+  IO_ADC_CMD      = 0x05,
+} IO_CMD_E;
+
+//最多不超过8字节
+typedef struct
+{
+    uint8_t   cmd;
+    uint8_t   error;
+    uint8_t   id;        //一共4个IO口，每个16pin，编号从0~63
+    uint8_t   dir;       //0--in, 1--out
+    uint8_t   level;
+}GPIO_CMD_S;
+
+typedef struct
+{
+	uint8_t   cmd;
+	uint16_t  val;
+}ADC_CMD_S;
+
 #define VCP_NUM           2
 
 typedef struct
@@ -141,7 +166,7 @@ typedef struct
 extern uint8_t  RxBuffer[VCP_NUM][CDC_DATA_FS_OUT_PACKET_SIZE];
 extern uint8_t  IoBuffer[CDC_CMD_PACKET_SIZE];
 
-#define USART_RX_QUEUE_LEN 1024
+#define USART_RX_QUEUE_LEN 512
 
 typedef struct
 {
