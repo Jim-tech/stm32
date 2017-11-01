@@ -105,6 +105,7 @@ uint8_t  RxBuffer[VCP_NUM][CDC_DATA_FS_OUT_PACKET_SIZE];
 uint8_t  IoBuffer[CDC_CMD_PACKET_SIZE];
 
 USART_Q  TxQueue[VCP_NUM];
+uint16_t g_adcdata[ADC_MAX_SAMPLES];
 
 /**
   * @}
@@ -117,6 +118,8 @@ USART_Q  TxQueue[VCP_NUM];
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
+extern ADC_HandleTypeDef hadc1;
+
 /* USER CODE END EXPORTED_VARIABLES */
 
 /**
@@ -375,6 +378,23 @@ static int8_t CDC_IoResponse (uint8_t *resp, uint32_t Len)
     return CDC_Transmit_FS(2, resp, Len);
 }
 
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *AdcHandle)
+{
+    uint32_t i;
+    uint32_t sum = 0;
+    ADC_CMD_S  stresp = {0};
+
+    for (i = 0; i < sizeof(g_adcdata)/sizeof(uint16_t); i++)
+    {
+        sum += g_adcdata[i];
+    }
+
+    stresp.error = 0;
+    stresp.val = sum / ADC_MAX_SAMPLES;
+    CDC_IoResponse((uint8_t *)&stresp, sizeof(stresp));
+}
+
 static void CDC_IoReq_Process (uint8_t *req, uint32_t Len)
 {
     uint8_t  cmd = req[0];
@@ -459,7 +479,22 @@ static void CDC_IoReq_Process (uint8_t *req, uint32_t Len)
                 CDC_IoResponse((uint8_t *)&stresp, sizeof(stresp));
             }            
             break;
+            
         case IO_ADC_CMD:
+            {
+                ADC_CMD_S  stresp = {0};
+                
+                memset(g_adcdata, 0, sizeof(g_adcdata));
+                if (HAL_ADC_Start_DMA(&hadc1, (uint32_t *)g_adcdata, ADC_MAX_SAMPLES ) != HAL_OK)
+                {
+                    stresp.error = 0xFF;
+                    CDC_IoResponse((uint8_t *)&stresp, sizeof(stresp));
+                }
+                else
+                {
+                    //do nothing
+                }
+            }
             break;            
         default:
             break;

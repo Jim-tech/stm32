@@ -150,6 +150,7 @@ typedef struct
 typedef struct
 {
 	uint8_t   cmd;
+    uint8_t   error;    
 	uint16_t  val;
 }ADC_CMD_S;
 
@@ -176,6 +177,9 @@ typedef struct
 } USART_Q;
 
 extern USART_Q  TxQueue[VCP_NUM];
+
+#define ADC_MAX_SAMPLES 32
+extern uint16_t g_adcdata[ADC_MAX_SAMPLES];
 
 #ifdef __cplusplus
 }
