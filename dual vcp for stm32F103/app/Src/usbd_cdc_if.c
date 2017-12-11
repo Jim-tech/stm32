@@ -456,7 +456,7 @@ static void CDC_IoReq_Process (uint8_t *req, uint32_t Len)
                 {
                     GPIO_InitTypeDef  gpioinitstruct = {0};
 
-                    gpioinitstruct.Pin    = preq->id%16;
+                    gpioinitstruct.Pin    = 1<<(preq->id%16);
 
                     if (preq->dir)
                     {
