@@ -418,7 +418,7 @@ static void CDC_IoReq_Process (uint8_t *req, uint32_t Len)
                 }
                 else
                 {
-                    stresp.level = HAL_GPIO_ReadPin(gpioports[preq->id/16], preq->id%16);
+                    stresp.level = HAL_GPIO_ReadPin(gpioports[preq->id/16], 1<<(preq->id%16));
                     stresp.error = 0;
                 }
 
@@ -436,7 +436,7 @@ static void CDC_IoReq_Process (uint8_t *req, uint32_t Len)
                 }
                 else
                 {
-                    HAL_GPIO_WritePin(gpioports[preq->id/16], preq->id%16, (GPIO_PinState)(preq->level));
+                    HAL_GPIO_WritePin(gpioports[preq->id/16], 1<<(preq->id%16), (GPIO_PinState)(preq->level));
                     stresp.error = 0;
                 }
 
@@ -471,7 +471,7 @@ static void CDC_IoReq_Process (uint8_t *req, uint32_t Len)
                     gpioinitstruct.Speed  = GPIO_SPEED_FREQ_HIGH;
 
                     HAL_GPIO_Init(gpioports[preq->id/16], &gpioinitstruct);
-                    HAL_GPIO_WritePin(gpioports[preq->id/16], preq->id%16, (GPIO_PinState)(preq->level));
+                    HAL_GPIO_WritePin(gpioports[preq->id/16], 1<<(preq->id%16), (GPIO_PinState)(preq->level));
                     
                     stresp.error = 0;
                 }
